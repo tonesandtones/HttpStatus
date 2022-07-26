@@ -6,3 +6,5 @@ riderModule.iml
 
 /.idea
 **/*.DotSettings.user
+
+.nuke/temp/

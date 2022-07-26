@@ -32,8 +32,11 @@ public class HttpStatusTests : IDisposable
     }
 
     [Theory]
-    [MemberData(nameof(ValidHttpStatusCodes))]
+    [MemberData(nameof(ValidHttpStatusCodes))] 
+//'description' is not used, but makes test cases easier to read in test reports.
+#pragma warning disable xUnit1026
     public async Task GoodStatusCodeRequestsReturnExpectedStatusCode(string description, int statusCode)
+#pragma warning restore xUnit1026
     {
         (await _client.GetAsync($"{statusCode}")).StatusCode.Should().Be((HttpStatusCode)statusCode);
     }

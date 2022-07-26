@@ -4,12 +4,16 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HttpStatus", "src\HttpStatu
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HttpStatusTests", "tests\HttpStatusTests\HttpStatusTests.csproj", "{93C5602A-ADDB-4354-B3CC-FAC8778B9275}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "_build", "build\_build.csproj", "{4F938574-1353-4860-9A22-BD99F09BAF26}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4F938574-1353-4860-9A22-BD99F09BAF26}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4F938574-1353-4860-9A22-BD99F09BAF26}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{29A52319-612E-462C-8ED1-9A3E5F8F05CC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{29A52319-612E-462C-8ED1-9A3E5F8F05CC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{29A52319-612E-462C-8ED1-9A3E5F8F05CC}.Release|Any CPU.ActiveCfg = Release|Any CPU

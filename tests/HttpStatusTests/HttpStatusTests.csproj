@@ -23,7 +23,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\HttpStatus\HttpStatus.csproj" />
+      <ProjectReference Include="..\..\src\HttpStatus\HttpStatus.csproj" />
     </ItemGroup>
 
 </Project>

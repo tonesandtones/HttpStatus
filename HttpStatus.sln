@@ -1,8 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HttpStatus", "HttpStatus\HttpStatus.csproj", "{29A52319-612E-462C-8ED1-9A3E5F8F05CC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HttpStatus", "src\HttpStatus\HttpStatus.csproj", "{29A52319-612E-462C-8ED1-9A3E5F8F05CC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HttpStatusTests", "HttpStatusTests\HttpStatusTests.csproj", "{93C5602A-ADDB-4354-B3CC-FAC8778B9275}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HttpStatusTests", "tests\HttpStatusTests\HttpStatusTests.csproj", "{93C5602A-ADDB-4354-B3CC-FAC8778B9275}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

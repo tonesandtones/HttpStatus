@@ -38,7 +38,9 @@ public class HttpStatusTests : IDisposable
     public async Task GoodStatusCodeRequestsReturnExpectedStatusCode(string description, int statusCode)
 #pragma warning restore xUnit1026
     {
-        (await _client.GetAsync($"{statusCode}")).StatusCode.Should().Be((HttpStatusCode)statusCode);
+        (await _client.GetAsync($"{statusCode}")).StatusCode
+            .Should()
+            .Be((HttpStatusCode)statusCode);
     }
 
     public static IEnumerable<object[]> ValidHttpStatusCodes()

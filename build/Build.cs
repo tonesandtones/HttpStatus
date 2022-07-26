@@ -46,4 +46,11 @@ class Build : NukeBuild
                 .SetConfiguration(Configuration)
                 .EnableNoRestore());
         });
+
+    Target Test => _ => _
+        .DependsOn(Compile)
+        .Executes(() =>
+        {
+            DotNetTest(s => s.SetLoggers("console;verbosity=normal"));
+        });
 }

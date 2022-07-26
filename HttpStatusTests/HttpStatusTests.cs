@@ -1,0 +1,45 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Threading.Tasks;
+using FluentAssertions;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Xunit;
+
+namespace HttpStatusTests;
+
+public class HttpStatusTests : IDisposable
+{
+    private readonly WebApplicationFactory<Program> _application;
+    private readonly HttpClient _client;
+
+    public HttpStatusTests()
+    {
+        _application = new WebApplicationFactory<Program>();
+        _client = _application.CreateClient(
+            new WebApplicationFactoryClientOptions
+            {
+                AllowAutoRedirect = false, HandleCookies = false
+            });
+    }
+
+    public void Dispose()
+    {
+        _application.Dispose();
+        _client.Dispose();
+    }
+
+    [Theory]
+    [MemberData(nameof(ValidHttpStatusCodes))]
+    public async Task GoodStatusCodeRequestsReturnExpectedStatusCode(string description, int statusCode)
+    {
+        (await _client.GetAsync($"{statusCode}")).StatusCode.Should().Be((HttpStatusCode)statusCode);
+    }
+
+    public static IEnumerable<object[]> ValidHttpStatusCodes()
+    {
+        return Enumerable.Range(100, 899).Select(x => new object[] { $"{x:000}", x });
+    }
+}

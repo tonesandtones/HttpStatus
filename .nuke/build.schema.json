@@ -74,6 +74,8 @@
             "enum": [
               "Clean",
               "Compile",
+              "Cover",
+              "DockerBuild",
               "Restore",
               "Test"
             ]
@@ -91,6 +93,8 @@
             "enum": [
               "Clean",
               "Compile",
+              "Cover",
+              "DockerBuild",
               "Restore",
               "Test"
             ]

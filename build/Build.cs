@@ -10,6 +10,7 @@ using Nuke.Common.Tools.Docker;
 using Nuke.Common.Tools.DotCover;
 using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Tools.GitVersion;
+using Nuke.Common.Tools.Npm;
 using Nuke.Common.Utilities.Collections;
 using Serilog;
 using static Nuke.Common.IO.FileSystemTasks;
@@ -29,6 +30,7 @@ class Build : NukeBuild
     AbsolutePath SourceDirectory => RootDirectory / "src";
     AbsolutePath TestsDirectory => RootDirectory / "tests";
     AbsolutePath CoverageDirectory => TestsDirectory / "coverage";
+    AbsolutePath IntegrationTestsDirectory = RootDirectory / "integration" / "httpstatusintegrationtests";
 
     Target Clean => _ => _
         .Before(Restore)
@@ -111,6 +113,19 @@ class Build : NukeBuild
                 .SetFile(Solution.Directory / "Dockerfile")
                 .SetProgress("plain")
                 .SetPath(Solution.Directory));
+        });
+
+    Target IntegrationTestNpmCi => _ => _
+        .Unlisted()
+        .Executes(() => NpmTasks.NpmCi(s => s.SetProcessWorkingDirectory(IntegrationTestsDirectory)));
+
+    Target IntegrationTest => _ => _
+        .DependsOn(IntegrationTestNpmCi)
+        .Executes(() =>
+        {
+            NpmTasks.NpmRun(s => s
+                .SetArguments("test")
+                .SetProcessWorkingDirectory(IntegrationTestsDirectory));
         });
 }
 

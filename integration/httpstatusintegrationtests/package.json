@@ -1,0 +1,23 @@
+{
+  "name": "httpstatusintegrationtests",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "jest": "^28.1.3",
+    "jest-fixed-default-reporter": "^2.0.1"
+  },
+  "jest": {
+    "reporters": [
+      "jest-fixed-default-reporter/VerboseReporter",
+      "jest-fixed-default-reporter/DefaultReporter",
+      "jest-fixed-default-reporter/SummaryReporter"
+    ]
+  }
+}

@@ -8,3 +8,6 @@ riderModule.iml
 **/*.DotSettings.user
 
 .nuke/temp/
+
+tests/coverage
+**/TestResults

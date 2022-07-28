@@ -76,6 +76,8 @@
               "Compile",
               "Cover",
               "DockerBuild",
+              "IntegrationTest",
+              "IntegrationTestNpmCi",
               "Restore",
               "Test"
             ]
@@ -95,6 +97,8 @@
               "Compile",
               "Cover",
               "DockerBuild",
+              "IntegrationTest",
+              "IntegrationTestNpmCi",
               "Restore",
               "Test"
             ]

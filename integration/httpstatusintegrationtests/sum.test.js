@@ -1,5 +1,14 @@
-const sum = require('./sum')
+const each = require('jest-each').default;
+const sum = (a, b) => a + b;
 
-test('1 + 2 == 3', () => {
-    expect(sum(1, 2)).toBe(3);
+let testCases = [
+    [1, 1, 2],
+    [2, 3, 5]
+];
+
+describe('Integration', () => {
+    each(testCases)
+        .test('%p + %p expects %p', (a, b, expected) => {
+            expect(sum(a, b)).toBe(expected);
+        })
 })

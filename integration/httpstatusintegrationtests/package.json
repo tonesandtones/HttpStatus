@@ -10,7 +10,9 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "axios": "^0.27.2",
     "jest": "^28.1.3",
+    "jest-each": "^28.1.3",
     "jest-fixed-default-reporter": "^2.0.1"
   },
   "jest": {

@@ -14,9 +14,17 @@
             "Release"
           ]
         },
+        "ContainerPort": {
+          "type": "integer",
+          "description": "The container port to map in the docker container when running integration tests. This must match Dockerfile's EXPOSE port - Default is 80"
+        },
         "Continue": {
           "type": "boolean",
           "description": "Indicates to continue a previously failed build attempt"
+        },
+        "Cover": {
+          "type": "boolean",
+          "description": "Whether to generate coverage snapshots and reports when running test. Only applies to the Test target - Default is false"
         },
         "Help": {
           "type": "boolean",
@@ -42,6 +50,18 @@
             "VisualStudio",
             "VSCode"
           ]
+        },
+        "HostPort": {
+          "type": "integer",
+          "description": "The host port to map to the docker container when running integration tests - Default is 8080"
+        },
+        "ImageName": {
+          "type": "string",
+          "description": "The name to give the docker image when its built - Default is 'httpstatus'"
+        },
+        "NoCleanUp": {
+          "type": "boolean",
+          "description": "Whether to _not_ docker rm the container that's started for integration tests when the tests have finished. Only applies to the IntegrationTest target - Default is false"
         },
         "NoLogo": {
           "type": "boolean",
@@ -74,8 +94,10 @@
             "enum": [
               "Clean",
               "Compile",
-              "Cover",
               "DockerBuild",
+              "DockerLog",
+              "DockerRun",
+              "DockerStop",
               "IntegrationTest",
               "IntegrationTestNpmCi",
               "Restore",
@@ -95,8 +117,10 @@
             "enum": [
               "Clean",
               "Compile",
-              "Cover",
               "DockerBuild",
+              "DockerLog",
+              "DockerRun",
+              "DockerStop",
               "IntegrationTest",
               "IntegrationTestNpmCi",
               "Restore",

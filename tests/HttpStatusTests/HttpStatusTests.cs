@@ -45,6 +45,6 @@ public class HttpStatusTests : IDisposable
 
     public static IEnumerable<object[]> ValidHttpStatusCodes()
     {
-        return Enumerable.Range(100, 899).Select(x => new object[] { $"{x:000}", x });
+        return Enumerable.Range(100, 900).Select(x => new object[] { $"{x:000}", x });
     }
 }

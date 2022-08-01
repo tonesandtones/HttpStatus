@@ -10,4 +10,4 @@ riderModule.iml
 .nuke/temp/
 
 tests/coverage
-**/TestResults
+tests/results

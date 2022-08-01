@@ -1,0 +1,4 @@
+{
+  "IntegrationTestBaseUrl": "https://localhost:7216",
+  "IgnoreSelfSigned": true
+}

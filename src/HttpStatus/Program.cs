@@ -1,11 +1,13 @@
 using System.Net;
 
 var builder = WebApplication.CreateBuilder(args);
+
 var app = builder.Build();
 
 app.UseRouting();
 app.MapGet("/", () => "Hello World!");
 
+app.UseHttpLogging();
 app.UseEndpoints(_ => { });
 app.Use(async (context, next) =>
 {

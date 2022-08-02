@@ -13,7 +13,10 @@
   <ItemGroup>
     <PackageReference Include="GitVersion.CommandLine" Version="5.10.3" />
     <PackageReference Include="Nuke.Common" Version="6.1.2" />
-    <PackageReference Include="JetBrains.dotCover.CommandLineTools" Version="2022.1.2" />
+    <PackageReference Include="JetBrains.dotCover.CommandLineTools" Version="2022.1.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
 </Project>

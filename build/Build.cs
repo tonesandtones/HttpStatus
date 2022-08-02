@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Xml;
 using Nuke.Common;
 using Nuke.Common.Git;
 using Nuke.Common.IO;
@@ -34,9 +33,9 @@ class Build : NukeBuild
     AbsolutePath IntegrationTestsDirectory = RootDirectory / "integration" / "httpstatusintegrationtests";
 
     [Parameter(
-        description: "The name to give the docker image when its built - Default is 'httpstatus'",
+        description: "The name to give the docker image when its built - Default is 'ghcr.io/tonesandtones/httpstatus'",
         Name = "ImageName")]
-    string dockerImageName = "httpstatus";
+    string dockerImageName = "ghcr.io/tonesandtones/httpstatus";
 
     [Parameter(
         description: "The host port to map to the docker container when running integration tests - Default is 8080",
@@ -225,6 +224,20 @@ class Build : NukeBuild
             {
                 DockerTasks.DockerContainerRm(s => s.AddContainers(containerId));
             }
+        });
+
+    Target DockerPush => _ => _
+        .DependsOn(IntegrationTest)
+        .After(DockerStop)
+        .Executes(() =>
+        {
+            var targetImageName = $"{dockerImageName}:{GitVersion.FullSemVer}";
+            DockerTasks.DockerImageTag(s => s
+                .SetSourceImage($"{dockerImageName}:latest")
+                .SetTargetImage(targetImageName)
+            );
+            DockerTasks.DockerPush(s => s
+                .SetName(targetImageName));
         });
 
     IEnumerable<string> GetContainerIds(bool failIfNotFound = true)

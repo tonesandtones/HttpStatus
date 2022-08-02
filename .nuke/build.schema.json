@@ -57,7 +57,7 @@
         },
         "ImageName": {
           "type": "string",
-          "description": "The name to give the docker image when its built - Default is 'httpstatus'"
+          "description": "The name to give the docker image when its built - Default is 'ghcr.io/tonesandtones/httpstatus'"
         },
         "NoCleanUp": {
           "type": "boolean",
@@ -96,6 +96,7 @@
               "Compile",
               "DockerBuild",
               "DockerLog",
+              "DockerPush",
               "DockerRun",
               "DockerStop",
               "IntegrationTest",
@@ -119,6 +120,7 @@
               "Compile",
               "DockerBuild",
               "DockerLog",
+              "DockerPush",
               "DockerRun",
               "DockerStop",
               "IntegrationTest",

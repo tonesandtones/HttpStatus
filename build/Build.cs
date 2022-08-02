@@ -180,6 +180,7 @@ class Build : NukeBuild
 
     Target DockerRun => _ => _
         .DependsOn(DockerBuild)
+        .Unlisted()
         .Executes(() =>
         {
             DockerTasks.DockerRun(s => s
@@ -190,6 +191,7 @@ class Build : NukeBuild
 
     Target DockerLog => _ => _
         .After(DockerRun)
+        .Unlisted()
         .Executes(() =>
         {
             var containerId = GetContainerIds().First();
@@ -215,6 +217,7 @@ class Build : NukeBuild
     Target DockerStop => _ => _
         .TriggeredBy(IntegrationTest)
         .AssuredAfterFailure()
+        .Unlisted()
         .Executes(() =>
         {
             var containerId = GetContainerIds().First();

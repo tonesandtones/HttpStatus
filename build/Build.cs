@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml;
@@ -14,7 +13,6 @@ using Nuke.Common.Tools.GitVersion;
 using Nuke.Common.Tools.Npm;
 using Nuke.Common.Utilities;
 using Nuke.Common.Utilities.Collections;
-using Serilog;
 using static Nuke.Common.IO.FileSystemTasks;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
 
@@ -103,6 +101,8 @@ class Build : NukeBuild
             var projectCoverageDirectory = CoverageResultsDirectory / "projects";
             var testProjects = new[] { Solution.HttpStatusTests };
 
+            AbsolutePath coverageResultFile = null;
+            AbsolutePath coverageReportFile = null;
             if (!enableCoverage)
             {
                 foreach (var testProject in testProjects)
@@ -138,23 +138,32 @@ class Build : NukeBuild
                     .SetOutputFile(CoverageResultsDirectory / "coverage.snapshot")
                 );
 
+                coverageResultFile = CoverageResultsDirectory / "coverage.xml";
+                coverageReportFile = CoverageResultsDirectory / "coverage.html";
                 //generate the report
                 DotCoverTasks.DotCoverReport(s => s
                     .SetReportType($"{DotCoverReportType.Html},{DotCoverReportType.DetailedXml}")
                     .SetSource(CoverageResultsDirectory / "coverage.snapshot")
-                    .SetOutputFile(
-                        $"{CoverageResultsDirectory / "coverage.html"};{CoverageResultsDirectory / "coverage.xml"}"));
+                    .SetOutputFile($"{coverageReportFile};{coverageResultFile}"));
             }
 
             ReportSummary(s =>
             {
-                var (hasSummary, total, passed, failed) = GetTestResultSummaryCounters(TestResultsDirectory);
-                if (hasSummary)
+                // var r = TestResultSummaries.GetTestResultSummaryCounters(TestResultsDirectory);
+                // if (r.HasResults)
+                // {
+                //     s.Add("Tests T/P/F", $"{r.TotalTests.Value}/{r.Passed.Value}/{r.Failed.Value}");
+                // }
+
+                if (coverageResultFile != null)
                 {
-                    s.Add("Tests T/P/F", $"{total}/{passed}/{failed}");
+                    var c = TestResultSummaries.GetTestCoverageSummary(coverageResultFile, testProjects);
+                    if (c.HasCoverage)
+                    {
+                        s.Add("Coverage", $"{c.CoveredStatements}/{c.TotalStatements}/{c.CoveragePercent}%");
+                    }
                 }
 
-                // s.Add("Coverage", "84.5%");
                 return s;
             });
         });
@@ -233,96 +242,5 @@ class Build : NukeBuild
         }
 
         return containerIds;
-    }
-
-    //(bool, int, int, int) ... I'm so sorry 😥
-    (bool, int, int, int) GetTestResultSummaryCounters(AbsolutePath testResultsLocation)
-    {
-        var testResultTrxs = testResultsLocation.GlobFiles("*.trx");
-        var counters = testResultTrxs.Select(x =>
-            {
-                var xmlDoc = new XmlDocument();
-                xmlDoc.Load(x);
-                return xmlDoc
-                    .SelectNodes("//*[name()='TestRun']/*[name()='ResultSummary']/*[name()='Counters']/@*")
-                    .AsEnumerable<XmlNode>()
-                    .Where(x => x.NodeType == XmlNodeType.Attribute)
-                    .ToDictionary(
-                        x => ((XmlAttribute)x).Name,
-                        x =>
-                        {
-                            var v = ((XmlAttribute)x).Value;
-                            if (int.TryParse(v, out var i)) return (int?)i;
-                            return null;
-                        });
-            })
-            .ToList();
-        
-        var total = counters.Sum(x => x["total"]);
-        var passed = counters.Sum(x => x["passed"]);
-        var failed = counters.Sum(x => x["failed"]);
-        if (total.HasValue && passed.HasValue && failed.HasValue)
-        {
-            return (true, total.Value, passed.Value, failed.Value);
-        }
-        return (false, 0, 0, 0);
-    }
-}
-
-[Serializable]
-public class MyDockerBuildSettings : DockerBuildSettings
-{
-    //docker buildkit sends _all_ output to stderr, not just errors. So provide a different ProcessCustomLogger
-    //that can split the stderr to Debug, Warning, or Error
-    public override Action<OutputType, string> ProcessCustomLogger => CustomLogger;
-
-    internal static void CustomLogger(OutputType type, string output)
-    {
-        switch (type)
-        {
-            case OutputType.Std:
-                Log.Debug(output);
-                break;
-            case OutputType.Err:
-            {
-                if (output.StartsWith("WARNING!"))
-                    Log.Warning(output);
-                else if (output.Contains("ERROR:"))
-                    Log.Error(output);
-                else Log.Debug(output);
-                break;
-            }
-        }
-    }
-
-    public static void DoSomething()
-    {
-        var location = "C:/pd/HttpStatus/HttpStatus/tests/results/HttpStatusTests_net6.0_20220801152647.trx";
-        var doc = new XmlDocument();
-        doc.Load(location);
-        var root = doc.DocumentElement;
-
-        var queries = new[]
-        {
-            "//*[name()='TestRun']/*[name()='ResultSummary']/*[name()='Counters']/@*",
-            "//*[name()='TestRun']/*[name()='ResultSummary']/*[name()='Counters']/@total",
-            "//*[name()='TestRun']/*[name()='ResultSummary']/*[name()='Counters']/@passed",
-            "//*[name()='TestRun']/*[name()='ResultSummary']/*[name()='Counters']/@failed",
-        };
-
-        foreach (var query in queries)
-        {
-            Console.Out.WriteLine($"Testing {query}");
-
-            try
-            {
-                var nodes = root.SelectNodes(query);
-                Console.Out.WriteLine($"Got nodes: {nodes?.Count}");
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-            }
-        }
     }
 }

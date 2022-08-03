@@ -110,7 +110,12 @@ class Build : NukeBuild
                     DotNetTest(s => s
                         .SetLoggers(testLoggers)
                         .SetResultsDirectory(TestResultsDirectory)
-                        .SetProjectFile(testProject));
+                        .SetProjectFile(testProject)
+                        //Disable config file watching - the tests start many instances of the web host
+                        .SetProcessEnvironmentVariable("ASPNETCORE_hostBuilder__reloadConfigOnChange", "false")
+                        //Don't log each request when running the tests
+                        .SetProcessEnvironmentVariable("Logging__LogLevel__Microsoft.AspNetCore.HttpLogging.HttpLoggingMiddleware", "Warning")
+                    );
                 }
             }
             else

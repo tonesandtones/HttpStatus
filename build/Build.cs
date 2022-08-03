@@ -129,6 +129,10 @@ class Build : NukeBuild
                         .SetTargetWorkingDirectory(Solution.Directory)
                         .SetTargetArguments(
                             $"test {testProject} {testLoggers.Select(x => $"-l {x}").Join(' ')} -r {TestResultsDirectory}")
+                        //Disable config file watching - the tests start many instances of the web host
+                        .SetProcessEnvironmentVariable("ASPNETCORE_hostBuilder__reloadConfigOnChange", "false")
+                        //Don't log each request when running the tests
+                        .SetProcessEnvironmentVariable("Logging__LogLevel__Microsoft.AspNetCore.HttpLogging.HttpLoggingMiddleware", "Warning")
                     );
                 }
 

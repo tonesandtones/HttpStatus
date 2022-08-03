@@ -8,6 +8,13 @@ HttpStatus is a simple web app that returns whatever HTTP status you request. Fo
 Open `HttpStatus.sln` in your IDE and run the app with the HttpSettings profile in `launchSettings.json`.
 
 ## Building
+
+### Prerequisites
+
+* DotNet 6+
+* Node and Npm
+* Docker
+
 To build and run integration tests, use the provided [Nuke](https://nuke.build) bootstrap scripts.
 
 ```shell

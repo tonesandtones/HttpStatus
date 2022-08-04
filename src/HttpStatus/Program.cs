@@ -2,6 +2,19 @@ using System.Net;
 
 var builder = WebApplication.CreateBuilder(args);
 
+//Linux and MacOS can't set environment variables with a '.' in them, so we can't override
+//"Logging:LogLevel:Microsoft.AspNetCore.HttpLogging.HttpLoggingMiddleware" with an environment variable.
+//But we can override "Logging:LogLevel:HttpLoggingMiddlewareOverride" with
+//Logging__LogLevel__HttpLoggingMiddlewareOverride
+var httpLoggingLevelOverride = builder.Configuration["Logging:LogLevel:HttpLoggingMiddlewareOverride"];
+if (httpLoggingLevelOverride != null)
+{
+    builder.Configuration.AddInMemoryCollection(
+        new []{new KeyValuePair<string, string>(
+            "Logging:LogLevel:Microsoft.AspNetCore.HttpLogging.HttpLoggingMiddleware", 
+            httpLoggingLevelOverride)});
+}
+
 var app = builder.Build();
 
 app.UseRouting();

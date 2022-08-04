@@ -83,7 +83,7 @@ class Build : NukeBuild
             DotNetBuild(s => s
                 .SetProjectFile(Solution)
                 .SetConfiguration(Configuration)
-                .SetFileVersion(GitVersion.NuGetVersionV2)
+                .SetFileVersion(GitVersion.AssemblySemFileVer)
                 .SetAssemblyVersion(GitVersion.AssemblySemVer)
                 .EnableNoRestore());
         });
@@ -110,7 +110,12 @@ class Build : NukeBuild
                     DotNetTest(s => s
                         .SetLoggers(testLoggers)
                         .SetResultsDirectory(TestResultsDirectory)
-                        .SetProjectFile(testProject));
+                        .SetProjectFile(testProject)
+                        //Disable config file watching - the tests start many instances of the web host
+                        .SetProcessEnvironmentVariable("ASPNETCORE_hostBuilder__reloadConfigOnChange", "false")
+                        //Don't log each request when running the tests
+                        .SetProcessEnvironmentVariable("Logging__LogLevel__HttpLoggingMiddlewareOverride", "Warning")
+                    );
                 }
             }
             else
@@ -124,6 +129,10 @@ class Build : NukeBuild
                         .SetTargetWorkingDirectory(Solution.Directory)
                         .SetTargetArguments(
                             $"test {testProject} {testLoggers.Select(x => $"-l {x}").Join(' ')} -r {TestResultsDirectory}")
+                        //Disable config file watching - the tests start many instances of the web host
+                        .SetProcessEnvironmentVariable("ASPNETCORE_hostBuilder__reloadConfigOnChange", "false")
+                        //Don't log each request when running the tests
+                        .SetProcessEnvironmentVariable("Logging__LogLevel__HttpLoggingMiddlewareOverride", "Warning")
                     );
                 }
 

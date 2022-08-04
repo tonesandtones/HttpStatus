@@ -15,7 +15,7 @@ COPY ["tests/HttpStatusTests/HttpStatusTests.csproj", "HttpStatusTests/"]
 RUN dotnet restore "HttpStatusTests/HttpStatusTests.csproj"
 COPY tests .
 WORKDIR "/tests/HttpStatusTests"
-RUN dotnet test "HttpStatusTests.csproj"
+RUN Logging__LogLevel__HttpLoggingMiddlewareOverride=Warning dotnet test "HttpStatusTests.csproj"
 
 FROM build AS publish
 WORKDIR "/src/HttpStatus"

@@ -114,7 +114,7 @@ class Build : NukeBuild
                         //Disable config file watching - the tests start many instances of the web host
                         .SetProcessEnvironmentVariable("ASPNETCORE_hostBuilder__reloadConfigOnChange", "false")
                         //Don't log each request when running the tests
-                        .SetProcessEnvironmentVariable("Logging__LogLevel__Microsoft.AspNetCore.HttpLogging.HttpLoggingMiddleware", "Warning")
+                        .SetProcessEnvironmentVariable("Logging__LogLevel__HttpLoggingMiddlewareOverride", "Warning")
                     );
                 }
             }
@@ -132,7 +132,7 @@ class Build : NukeBuild
                         //Disable config file watching - the tests start many instances of the web host
                         .SetProcessEnvironmentVariable("ASPNETCORE_hostBuilder__reloadConfigOnChange", "false")
                         //Don't log each request when running the tests
-                        .SetProcessEnvironmentVariable("Logging__LogLevel__Microsoft.AspNetCore.HttpLogging.HttpLoggingMiddleware", "Warning")
+                        .SetProcessEnvironmentVariable("Logging__LogLevel__HttpLoggingMiddlewareOverride", "Warning")
                     );
                 }
 

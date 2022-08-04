@@ -5,11 +5,13 @@ using Nuke.Common.Git;
 using Nuke.Common.IO;
 using Nuke.Common.ProjectModel;
 using Nuke.Common.Tooling;
+using Nuke.Common.Tools.Coverlet;
 using Nuke.Common.Tools.Docker;
 using Nuke.Common.Tools.DotCover;
 using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Tools.GitVersion;
 using Nuke.Common.Tools.Npm;
+using Nuke.Common.Tools.ReportGenerator;
 using Nuke.Common.Utilities;
 using Nuke.Common.Utilities.Collections;
 using static Nuke.Common.IO.FileSystemTasks;
@@ -86,6 +88,25 @@ class Build : NukeBuild
                 .SetFileVersion(GitVersion.AssemblySemFileVer)
                 .SetAssemblyVersion(GitVersion.AssemblySemVer)
                 .EnableNoRestore());
+        });
+
+    Target TestCoverlet => _ => _
+        .DependsOn(Compile)
+        .Executes(() =>
+        {
+            DotNetTasks.DotNetTest(s => s
+                .SetDataCollector("XPlat Code Coverage")
+                .SetProcessEnvironmentVariable("ASPNETCORE_hostBuilder__reloadConfigOnChange", "false")
+                .SetProcessEnvironmentVariable("Logging__LogLevel__HttpLoggingMiddlewareOverride", "Warning")
+            );
+
+            var coverageReports= TestsDirectory.GlobFiles("**/coverage.cobertura.xml");
+            ReportGeneratorTasks.ReportGenerator(s => s
+                .SetFramework("netcoreapp3.1")
+                .SetReports(coverageReports.Select(x => x.ToString()))
+                .SetTargetDirectory(CoverageResultsDirectory)
+                .SetReportTypes(ReportTypes.Cobertura, ReportTypes.Html, ReportTypes.Xml)
+            );
         });
 
     Target Test => _ => _

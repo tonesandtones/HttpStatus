@@ -22,9 +22,9 @@
           "type": "boolean",
           "description": "Indicates to continue a previously failed build attempt"
         },
-        "Cover": {
-          "type": "boolean",
-          "description": "Whether to generate coverage snapshots and reports when running test. Only applies to the Test target - Default is false"
+        "DockerRegistry": {
+          "type": "string",
+          "description": "The login hostname of the docker registry - Default is 'ghcr.io'"
         },
         "Help": {
           "type": "boolean",
@@ -57,7 +57,7 @@
         },
         "ImageName": {
           "type": "string",
-          "description": "The name to give the docker image when its built - Default is 'ghcr.io/tonesandtones/httpstatus'"
+          "description": "The name to give the docker image when its built - Default is 'tonesandtones/httpstatus'"
         },
         "NoCleanUp": {
           "type": "boolean",
@@ -94,8 +94,10 @@
             "enum": [
               "Clean",
               "Compile",
+              "Cover",
               "DockerBuild",
               "DockerLog",
+              "DockerLogin",
               "DockerPush",
               "DockerRun",
               "DockerStop",
@@ -118,8 +120,10 @@
             "enum": [
               "Clean",
               "Compile",
+              "Cover",
               "DockerBuild",
               "DockerLog",
+              "DockerLogin",
               "DockerPush",
               "DockerRun",
               "DockerStop",

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Nuke.Common;
-using Nuke.Common.Git;
+using Nuke.Common.CI.GitHubActions;
 using Nuke.Common.IO;
 using Nuke.Common.ProjectModel;
 using Nuke.Common.Tooling;
@@ -12,9 +12,28 @@ using Nuke.Common.Tools.GitVersion;
 using Nuke.Common.Tools.Npm;
 using Nuke.Common.Utilities;
 using Nuke.Common.Utilities.Collections;
+using Serilog;
 using static Nuke.Common.IO.FileSystemTasks;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
 
+[GitHubActions(
+    "test",
+    GitHubActionsImage.UbuntuLatest,
+    AutoGenerate = false, //requires customisation to fetch enough git history for gitversion to work
+    InvokedTargets = new[] { nameof(Test) },
+    OnPushBranchesIgnore = new[] { "main", "origin/main" })]
+[GitHubActions(
+    "pull-request",
+    GitHubActionsImage.UbuntuLatest,
+    AutoGenerate = false, //requires customisation to fetch enough git history for gitversion to work
+    On = new[] { GitHubActionsTrigger.PullRequest },
+    InvokedTargets = new[] { nameof(Cover), nameof(IntegrationTest) })]
+[GitHubActions(
+    "release",
+    GitHubActionsImage.UbuntuLatest,
+    AutoGenerate = false, //requires customisation to fetch enough git history for gitversion to work
+    InvokedTargets = new[] { nameof(Cover), nameof(DockerPush) },
+    OnPushBranches = new[] { "main", "origin/main" })]
 class Build : NukeBuild
 {
     public static int Main() => Execute<Build>(x => x.Compile);
@@ -24,18 +43,23 @@ class Build : NukeBuild
 
     [Solution(GenerateProjects = true)] readonly Solution Solution;
     [GitVersion] readonly GitVersion GitVersion;
-    [GitRepository] readonly GitRepository GitRepository;
+    GitHubActions GitHubActions => GitHubActions.Instance;
 
     AbsolutePath SourceDirectory => RootDirectory / "src";
     AbsolutePath TestsDirectory => RootDirectory / "tests";
-    AbsolutePath TestResultsDirectory => TestsDirectory / "results";
-    AbsolutePath CoverageResultsDirectory => TestsDirectory / "coverage";
+    AbsolutePath TestResultsDirectory => TestsDirectory / "TestResults";
+    AbsolutePath CoverageResultsDirectory => TestsDirectory / "TestCoverage";
     AbsolutePath IntegrationTestsDirectory = RootDirectory / "integration" / "httpstatusintegrationtests";
 
     [Parameter(
-        description: "The name to give the docker image when its built - Default is 'ghcr.io/tonesandtones/httpstatus'",
+        description: "The name to give the docker image when its built - Default is 'tonesandtones/httpstatus'",
         Name = "ImageName")]
-    string dockerImageName = "ghcr.io/tonesandtones/httpstatus";
+    string dockerImageName = "tonesandtones/httpstatus";
+
+    [Parameter(
+        description: "The login hostname of the docker registry - Default is 'ghcr.io'",
+        Name = "DockerRegistry")]
+    string dockerRepository = "ghcr.io";
 
     [Parameter(
         description: "The host port to map to the docker container when running integration tests - Default is 8080",
@@ -49,16 +73,12 @@ class Build : NukeBuild
     int containerPort = 80;
 
     [Parameter(
-        description: "Whether to generate coverage snapshots and reports when running test. Only applies to the " +
-                     "Test target - Default is false",
-        Name = "Cover")]
-    bool enableCoverage = false;
-
-    [Parameter(
         description: "Whether to _not_ docker rm the container that's started for integration tests when the tests " +
                      "have finished. Only applies to the IntegrationTest target - Default is false",
         Name = "NoCleanUp")]
     bool noCleanup = false;
+
+    string DockerFullImageName => $"{dockerRepository}/{dockerImageName}";
 
     Target Clean => _ => _
         .Before(Restore)
@@ -91,7 +111,32 @@ class Build : NukeBuild
     Target Test => _ => _
         .DependsOn(Compile)
         .Before(DockerBuild) //if run with DockerBuild, then do test before DockerBuild
-        .Produces(CoverageResultsDirectory)
+        .Produces(TestResultsDirectory)
+        .OnlyWhenDynamic(() => !ExecutionPlan.Contains(Cover)) //Don't do Test if we're also doing Cover.
+        .Executes(() =>
+        {
+            var testLoggerTypes = new[] { "trx", "html" };
+            var testProjects = new[] { Solution.HttpStatusTests };
+
+            foreach (var testProject in testProjects)
+            {
+                var testLoggers = testLoggerTypes.Select(x => $"{x};LogFilePrefix={testProject.Name}");
+                DotNetTest(s => s
+                    .SetLoggers(testLoggers)
+                    .SetResultsDirectory(TestResultsDirectory)
+                    .SetProjectFile(testProject)
+                    //Disable config file watching - the tests start many instances of the web host
+                    .SetProcessEnvironmentVariable("ASPNETCORE_hostBuilder__reloadConfigOnChange", "false")
+                    //Don't log each request when running the tests
+                    .SetProcessEnvironmentVariable("Logging__LogLevel__HttpLoggingMiddlewareOverride", "Warning")
+                );
+            }
+        });
+
+    Target Cover => _ => _
+        .DependsOn(Compile)
+        .Before(DockerBuild) //if run with DockerBuild, then do test before DockerBuild
+        .Produces(CoverageResultsDirectory, TestResultsDirectory)
         .Executes(() =>
         {
             var testLoggerTypes = new[] { "trx", "html" };
@@ -102,39 +147,21 @@ class Build : NukeBuild
 
             AbsolutePath coverageResultFile = null;
             AbsolutePath coverageReportFile = null;
-            if (!enableCoverage)
+
+            foreach (var testProject in testProjects)
             {
-                foreach (var testProject in testProjects)
-                {
-                    var testLoggers = testLoggerTypes.Select(x => $"{x};LogFilePrefix={testProject.Name}");
-                    DotNetTest(s => s
-                        .SetLoggers(testLoggers)
-                        .SetResultsDirectory(TestResultsDirectory)
-                        .SetProjectFile(testProject)
-                        //Disable config file watching - the tests start many instances of the web host
-                        .SetProcessEnvironmentVariable("ASPNETCORE_hostBuilder__reloadConfigOnChange", "false")
-                        //Don't log each request when running the tests
-                        .SetProcessEnvironmentVariable("Logging__LogLevel__HttpLoggingMiddlewareOverride", "Warning")
-                    );
-                }
-            }
-            else
-            {
-                foreach (var testProject in testProjects)
-                {
-                    var testLoggers = testLoggerTypes.Select(x => $"{x};LogFilePrefix={testProject.Name}");
-                    DotCoverTasks.DotCoverCover(s => s
-                        .SetTargetExecutable(dotnetPath)
-                        .SetOutputFile(projectCoverageDirectory / $"{testProject.Name}.snapshot")
-                        .SetTargetWorkingDirectory(Solution.Directory)
-                        .SetTargetArguments(
-                            $"test {testProject} {testLoggers.Select(x => $"-l {x}").Join(' ')} -r {TestResultsDirectory}")
-                        //Disable config file watching - the tests start many instances of the web host
-                        .SetProcessEnvironmentVariable("ASPNETCORE_hostBuilder__reloadConfigOnChange", "false")
-                        //Don't log each request when running the tests
-                        .SetProcessEnvironmentVariable("Logging__LogLevel__HttpLoggingMiddlewareOverride", "Warning")
-                    );
-                }
+                var testLoggers = testLoggerTypes.Select(x => $"{x};LogFilePrefix={testProject.Name}");
+                DotCoverTasks.DotCoverCover(s => s
+                    .SetTargetExecutable(dotnetPath)
+                    .SetOutputFile(projectCoverageDirectory / $"{testProject.Name}.snapshot")
+                    .SetTargetWorkingDirectory(Solution.Directory)
+                    .SetTargetArguments(
+                        $"test {testProject} {testLoggers.Select(x => $"-l {x}").Join(' ')} -r {TestResultsDirectory}")
+                    //Disable config file watching - the tests start many instances of the web host
+                    .SetProcessEnvironmentVariable("ASPNETCORE_hostBuilder__reloadConfigOnChange", "false")
+                    //Don't log each request when running the tests
+                    .SetProcessEnvironmentVariable("Logging__LogLevel__HttpLoggingMiddlewareOverride", "Warning")
+                );
 
                 var projectSnapshots = projectCoverageDirectory.GlobFiles("*.snapshot")
                     .Select(x => x.ToString())
@@ -181,7 +208,7 @@ class Build : NukeBuild
         .Executes(() =>
         {
             DockerTasks.DockerBuild(s => new MyDockerBuildSettings()
-                .SetTag(dockerImageName)
+                .SetTag(DockerFullImageName)
                 .SetFile(Solution.Directory / "Dockerfile")
                 .SetProgress("plain")
                 .SetPath(Solution.Directory));
@@ -195,7 +222,7 @@ class Build : NukeBuild
             DockerTasks.DockerRun(s => s
                 .SetPublish($"{hostPort}:{containerPort}")
                 .EnableDetach()
-                .SetImage(dockerImageName));
+                .SetImage(DockerFullImageName));
         });
 
     Target DockerLog => _ => _
@@ -238,9 +265,31 @@ class Build : NukeBuild
             }
         });
 
+    Target DockerLogin => _ => _
+        .Unlisted()
+        .OnlyWhenDynamic(() => IsRunningAsGitHubAction())
+        .Executes(() =>
+        {
+            // if (GitHubActions?.Actor != null && GitHubActions?.Token != null)
+            // {
+            Log.Debug("Running as a GitHub Action, performing docker login using the GitHub Actions' actor and token");
+            DockerTasks.DockerLogin(s => s
+                .SetServer(dockerRepository)
+                .SetUsername(GitHubActions?.Actor)
+                .SetPassword(GitHubActions?.Token));
+            // }
+            // else
+            // {
+            // Log.Debug("Not running as a GitHub Action, you should have already 'docker login' some other way");
+            // }
+        });
+
+    bool IsRunningAsGitHubAction() => GitHubActions is { Actor: { }, Token: { } };
+
     Target DockerPush => _ => _
-        .DependsOn(IntegrationTest)
+        .DependsOn(IntegrationTest, DockerLogin)
         .After(DockerStop)
+        .OnlyWhenDynamic(() => GitVersion.BranchName.Equals("main") || GitVersion.BranchName.Equals("origin/main"))
         .Executes(() =>
         {
             var targetImageName = $"{dockerImageName}:{GitVersion.FullSemVer}";
@@ -256,14 +305,14 @@ class Build : NukeBuild
     {
         var outputs = DockerTasks.DockerPs(s => s
             .EnableQuiet()
-            .SetFilter($"ancestor={dockerImageName}"));
+            .SetFilter($"ancestor={DockerFullImageName}"));
         var containerIds = outputs
             .Where(s => s.Type == OutputType.Std)
             .Select(x => x.Text)
             .ToList();
         if (!containerIds.Any() && failIfNotFound)
         {
-            Assert.Fail($"Could not find a running container for image '{dockerImageName}'");
+            Assert.Fail($"Could not find a running container for image '{DockerFullImageName}'");
         }
 
         return containerIds;

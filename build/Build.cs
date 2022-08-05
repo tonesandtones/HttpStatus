@@ -102,8 +102,7 @@ class Build : NukeBuild
         .DependsOn(Restore)
         .Executes(() =>
         {
-            
-            GitVersion GitVersion = GitVersionTasks.GitVersion().Result;
+            GitVersion GitVersion = GitVersionTasks.GitVersion(s => s.SetFramework("net6.0")).Result;
             DotNetBuild(s => s
                 .SetProjectFile(Solution)
                 .SetConfiguration(Configuration)

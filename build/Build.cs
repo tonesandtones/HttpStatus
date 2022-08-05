@@ -292,9 +292,9 @@ class Build : NukeBuild
         .OnlyWhenDynamic(() => GitVersion.BranchName.Equals("main") || GitVersion.BranchName.Equals("origin/main"))
         .Executes(() =>
         {
-            var targetImageName = $"{dockerImageName}:{GitVersion.FullSemVer}";
+            var targetImageName = $"{DockerFullImageName}:{GitVersion.FullSemVer}";
             DockerTasks.DockerImageTag(s => s
-                .SetSourceImage($"{dockerImageName}:latest")
+                .SetSourceImage($"{DockerFullImageName}:latest")
                 .SetTargetImage(targetImageName)
             );
             DockerTasks.DockerPush(s => s

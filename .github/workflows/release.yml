@@ -23,9 +23,9 @@ on:
       - origin/main
 
 jobs:
-  ubuntu-20_04:
-    name: ubuntu-20_04
-    runs-on: ubuntu-20.04
+  ubuntu-18_04:
+    name: ubuntu-18_04
+    runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
       - name: Cache .nuke/temp, ~/.nuget/packages

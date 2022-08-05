@@ -18,21 +18,21 @@ using static Nuke.Common.Tools.DotNet.DotNetTasks;
 
 [GitHubActions(
     "test",
-    GitHubActionsImage.UbuntuLatest,
-    AutoGenerate = false,
+    GitHubActionsImage.WindowsLatest,
+    // AutoGenerate = false,
     // On = new[] { GitHubActionsTrigger.Push },
     InvokedTargets = new[] { nameof(Test) },
     OnPushBranchesIgnore = new[] { "main", "origin/main" })]
 [GitHubActions(
     "pull-request",
-    GitHubActionsImage.UbuntuLatest,
-    AutoGenerate = false,
+    GitHubActionsImage.WindowsLatest,
+    // AutoGenerate = false,
     On = new[] { GitHubActionsTrigger.PullRequest },
     InvokedTargets = new[] { nameof(Cover), nameof(IntegrationTest) })]
 [GitHubActions(
     "release",
-    GitHubActionsImage.UbuntuLatest,
-    AutoGenerate = false,
+    GitHubActionsImage.WindowsLatest,
+    // AutoGenerate = false,
     // On = new[] { GitHubActionsTrigger.Push },
     InvokedTargets = new[] { nameof(Cover), nameof(DockerPush) },
     OnPushBranches = new[] { "main", "origin/main" })]

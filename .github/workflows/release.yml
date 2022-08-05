@@ -16,9 +16,11 @@
 #
 # Customisations:
 # BE SURE TO RE-APPLY THE CUSTOMISATIONS IF YOU RE-GENERATE THIS FILE.
-# actions/checkout@v2 -> set to @v3
-# actions/checkout -> add fetch-depth: 0
-# Set the name of the job to 'release'
+# * actions/checkout@v2 -> set to @v3
+# * actions/checkout -> add fetch-depth: 0
+# * Set the name of the job to 'release'
+# * Add docker-login action - we can docker login in the Nuke build but can't do --password-stdin so get ugly
+#   (but harmless) warnings and errors in the actions output
 
 name: release
 
@@ -43,6 +45,12 @@ jobs:
             .nuke/temp
             ~/.nuget/packages
           key: ${{ runner.os }}-${{ hashFiles('**/global.json', '**/*.csproj') }}
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Run './build.cmd Cover DockerPush'
         run: ./build.cmd Cover DockerPush
         env:

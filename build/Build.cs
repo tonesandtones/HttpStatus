@@ -12,7 +12,6 @@ using Nuke.Common.Tools.GitVersion;
 using Nuke.Common.Tools.Npm;
 using Nuke.Common.Utilities;
 using Nuke.Common.Utilities.Collections;
-using Serilog;
 using static Nuke.Common.IO.FileSystemTasks;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
 
@@ -266,29 +265,8 @@ class Build : NukeBuild
             }
         });
 
-    Target DockerLogin => _ => _
-        .Unlisted()
-        .OnlyWhenDynamic(() => IsRunningAsGitHubAction())
-        .Executes(() =>
-        {
-            // if (GitHubActions?.Actor != null && GitHubActions?.Token != null)
-            // {
-            Log.Debug("Running as a GitHub Action, performing docker login using the GitHub Actions' actor and token");
-            DockerTasks.DockerLogin(s => s
-                .SetServer(dockerRepository)
-                .SetUsername(GitHubActions?.Actor)
-                .SetPassword(GitHubActions?.Token));
-            // }
-            // else
-            // {
-            // Log.Debug("Not running as a GitHub Action, you should have already 'docker login' some other way");
-            // }
-        });
-
-    bool IsRunningAsGitHubAction() => GitHubActions is { Actor: { }, Token: { } };
-
     Target DockerPush => _ => _
-        .DependsOn(IntegrationTest, DockerLogin)
+        .DependsOn(IntegrationTest)
         .After(DockerStop)
         .OnlyWhenDynamic(() => GitVersion.BranchName.Equals("main") || GitVersion.BranchName.Equals("origin/main"))
         .Executes(() =>

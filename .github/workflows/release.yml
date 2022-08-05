@@ -18,6 +18,7 @@
 # BE SURE TO RE-APPLY THE CUSTOMISATIONS IF YOU RE-GENERATE THIS FILE.
 # actions/checkout@v2 -> set to @v3
 # actions/checkout -> add fetch-depth: 0
+# Set the name of the job to 'release'
 
 name: release
 
@@ -28,8 +29,8 @@ on:
       - origin/main
 
 jobs:
-  ubuntu-latest:
-    name: ubuntu-latest
+  release:
+    name: release
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3

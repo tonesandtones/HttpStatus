@@ -23,9 +23,9 @@ on:
       - origin/main
 
 jobs:
-  windows-latest:
-    name: windows-latest
-    runs-on: windows-latest
+  ubuntu-latest:
+    name: ubuntu-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - name: Cache .nuke/temp, ~/.nuget/packages

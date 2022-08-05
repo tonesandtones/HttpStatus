@@ -18,20 +18,20 @@ using static Nuke.Common.Tools.DotNet.DotNetTasks;
 
 [GitHubActions(
     "test",
-    GitHubActionsImage.WindowsLatest,
+    GitHubActionsImage.UbuntuLatest,
     // AutoGenerate = false,
     // On = new[] { GitHubActionsTrigger.Push },
     InvokedTargets = new[] { nameof(Test) },
     OnPushBranchesIgnore = new[] { "main", "origin/main" })]
 [GitHubActions(
     "pull-request",
-    GitHubActionsImage.WindowsLatest,
+    GitHubActionsImage.UbuntuLatest,
     // AutoGenerate = false,
     On = new[] { GitHubActionsTrigger.PullRequest },
     InvokedTargets = new[] { nameof(Cover), nameof(IntegrationTest) })]
 [GitHubActions(
     "release",
-    GitHubActionsImage.WindowsLatest,
+    GitHubActionsImage.UbuntuLatest,
     // AutoGenerate = false,
     // On = new[] { GitHubActionsTrigger.Push },
     InvokedTargets = new[] { nameof(Cover), nameof(DockerPush) },
@@ -44,7 +44,7 @@ class Build : NukeBuild
     readonly Configuration Configuration = IsLocalBuild ? Configuration.Debug : Configuration.Release;
 
     [Solution(GenerateProjects = true)] readonly Solution Solution;
-    [GitVersion] readonly GitVersion GitVersion;
+    [GitVersion(Framework = "net6.0")] readonly GitVersion GitVersion;
     GitHubActions GitHubActions => GitHubActions.Instance;
 
     AbsolutePath SourceDirectory => RootDirectory / "src";
@@ -102,6 +102,8 @@ class Build : NukeBuild
         .DependsOn(Restore)
         .Executes(() =>
         {
+            
+            GitVersion GitVersion = GitVersionTasks.GitVersion().Result;
             DotNetBuild(s => s
                 .SetProjectFile(Solution)
                 .SetConfiguration(Configuration)

@@ -28,11 +28,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Check dotnet version
-        run: dotnet --version
-      - uses: actions/setup-dotnet@v2
-        with:
-          dotnet-version: '6.0.x'
+      - name: Check pwd
+        run: pwd
+      - name: git status
+        run: git status
       - name: Cache .nuke/temp, ~/.nuget/packages
         uses: actions/cache@v2
         with:

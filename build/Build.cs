@@ -33,7 +33,8 @@ using static Nuke.Common.Tools.DotNet.DotNetTasks;
     GitHubActionsImage.UbuntuLatest,
     AutoGenerate = false, //requires customisation to fetch enough git history for gitversion to work
     InvokedTargets = new[] { nameof(Cover), nameof(DockerPush) },
-    OnPushBranches = new[] { "main", "origin/main" })]
+    OnPushBranches = new[] { "main", "origin/main" },
+    EnableGitHubToken = true)]
 class Build : NukeBuild
 {
     public static int Main() => Execute<Build>(x => x.Compile);

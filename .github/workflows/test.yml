@@ -23,13 +23,11 @@ on:
       - origin/main
 
 jobs:
-  ubuntu-latest:
-    name: ubuntu-latest
-    runs-on: ubuntu-latest
+  ubuntu-20_04:
+    name: ubuntu-20_04
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
-      - name: git status
-        run: git status && git remote -v
       - name: Cache .nuke/temp, ~/.nuget/packages
         uses: actions/cache@v2
         with:

@@ -271,18 +271,10 @@ class Build : NukeBuild
         .OnlyWhenDynamic(() => IsRunningAsGitHubAction())
         .Executes(() =>
         {
-            // if (GitHubActions?.Actor != null && GitHubActions?.Token != null)
-            // {
-            Log.Debug("Running as a GitHub Action, performing docker login using the GitHub Actions' actor and token");
-            DockerTasks.DockerLogin(s => s
+            DockerTasks.DockerLogin(s => new MyDockerLoginSettings()
                 .SetServer(dockerRepository)
                 .SetUsername(GitHubActions?.Actor)
                 .SetPassword(GitHubActions?.Token));
-            // }
-            // else
-            // {
-            // Log.Debug("Not running as a GitHub Action, you should have already 'docker login' some other way");
-            // }
         });
 
     bool IsRunningAsGitHubAction() => GitHubActions is { Actor: { }, Token: { } };

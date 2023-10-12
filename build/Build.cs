@@ -12,29 +12,30 @@ using Nuke.Common.Tools.GitVersion;
 using Nuke.Common.Tools.Npm;
 using Nuke.Common.Utilities;
 using Nuke.Common.Utilities.Collections;
-using Serilog;
-using static Nuke.Common.IO.FileSystemTasks;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
 
 [GitHubActions(
     "test",
     GitHubActionsImage.UbuntuLatest,
-    AutoGenerate = false, //requires customisation to fetch enough git history for gitversion to work
     InvokedTargets = new[] { nameof(Test) },
-    OnPushBranchesIgnore = new[] { "main", "origin/main" })]
+    OnPushBranchesIgnore = new[] { "main", "origin/main" },
+    FetchDepth = 0/*,
+    JobNamePrefix = "test"*/)]
 [GitHubActions(
     "pull-request",
     GitHubActionsImage.UbuntuLatest,
-    AutoGenerate = false, //requires customisation to fetch enough git history for gitversion to work
     On = new[] { GitHubActionsTrigger.PullRequest },
-    InvokedTargets = new[] { nameof(Cover), nameof(IntegrationTest) })]
+    InvokedTargets = new[] { nameof(Cover), nameof(IntegrationTest) },
+    FetchDepth = 0/*,
+    JobNamePrefix = "test"*/)]
 [GitHubActions(
     "release",
     GitHubActionsImage.UbuntuLatest,
-    AutoGenerate = false, //requires customisation to fetch enough git history for gitversion to work
     InvokedTargets = new[] { nameof(Cover), nameof(DockerPush) },
     OnPushBranches = new[] { "main", "origin/main" },
-    EnableGitHubToken = true)]
+    EnableGitHubToken = true,
+    FetchDepth = 0/*,
+    JobNamePrefix = "test"*/)]
 class Build : NukeBuild
 {
     public static int Main() => Execute<Build>(x => x.Compile);
@@ -85,10 +86,10 @@ class Build : NukeBuild
         .Before(Restore)
         .Executes(() =>
         {
-            SourceDirectory.GlobDirectories("**/bin", "**/obj").ForEach(DeleteDirectory);
-            TestsDirectory.GlobDirectories("**/bin", "**/obj").ForEach(DeleteDirectory);
-            DeleteDirectory(CoverageResultsDirectory);
-            DeleteDirectory(TestResultsDirectory);
+            SourceDirectory.GlobDirectories("**/bin", "**/obj").ForEach(AbsolutePathExtensions.DeleteDirectory);
+            TestsDirectory.GlobDirectories("**/bin", "**/obj").ForEach(AbsolutePathExtensions.DeleteDirectory);
+            CoverageResultsDirectory.DeleteDirectory();
+            TestResultsDirectory.DeleteDirectory();
         });
 
     Target Restore => _ => _

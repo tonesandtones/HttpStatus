@@ -14,28 +14,30 @@ using Nuke.Common.Utilities;
 using Nuke.Common.Utilities.Collections;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
 
+// ReSharper disable AllUnderscoreLocalParameterName
+// - Resharper doesn't like Nuke's convention of using underscore in defining building targets since the _ is an
+//   actual parameter name and not a discard.
+//   eg, Target MyTarget => _ => _
+
 [GitHubActions(
     "test",
     GitHubActionsImage.UbuntuLatest,
     InvokedTargets = new[] { nameof(Test) },
     OnPushBranchesIgnore = new[] { "main", "origin/main" },
-    FetchDepth = 0/*,
-    JobNamePrefix = "test"*/)]
+    FetchDepth = 0)]
 [GitHubActions(
     "pull-request",
     GitHubActionsImage.UbuntuLatest,
     On = new[] { GitHubActionsTrigger.PullRequest },
     InvokedTargets = new[] { nameof(Cover), nameof(IntegrationTest) },
-    FetchDepth = 0/*,
-    JobNamePrefix = "test"*/)]
+    FetchDepth = 0)]
 [GitHubActions(
     "release",
     GitHubActionsImage.UbuntuLatest,
     InvokedTargets = new[] { nameof(Cover), nameof(DockerPush) },
     OnPushBranches = new[] { "main", "origin/main" },
     EnableGitHubToken = true,
-    FetchDepth = 0/*,
-    JobNamePrefix = "test"*/)]
+    FetchDepth = 0)]
 class Build : NukeBuild
 {
     public static int Main() => Execute<Build>(x => x.Compile);
@@ -56,32 +58,33 @@ class Build : NukeBuild
     [Parameter(
         description: "The name to give the docker image when its built - Default is 'tonesandtones/httpstatus'",
         Name = "ImageName")]
-    string dockerImageName = "tonesandtones/httpstatus";
+    string DockerImageName = "tonesandtones/httpstatus";
 
     [Parameter(
         description: "The login hostname of the docker registry - Default is 'ghcr.io'",
         Name = "DockerRegistry")]
-    string dockerRepository = "ghcr.io";
+    string DockerRepository = "ghcr.io";
 
     [Parameter(
         description: "The host port to map to the docker container when running integration tests - Default is 8080",
         Name = "HostPort")]
-    int hostPort = 8080;
+    int HostPort = 8080;
 
     [Parameter(
         description: "The container port to map in the docker container when running integration tests. " +
                      "This must match Dockerfile's EXPOSE port - Default is 80",
         Name = "ContainerPort")]
-    int containerPort = 80;
+    int ContainerPort = 80;
 
     [Parameter(
         description: "Whether to _not_ docker rm the container that's started for integration tests when the tests " +
                      "have finished. Only applies to the IntegrationTest target - Default is false",
         Name = "NoCleanUp")]
-    bool noCleanup = false;
+    bool NoCleanup;
 
-    string DockerFullImageName => $"{dockerRepository}/{dockerImageName}";
+    string DockerFullImageName => $"{DockerRepository}/{DockerImageName}";
 
+    // ReSharper disable once UnusedMember.Local
     Target Clean => _ => _
         .Before(Restore)
         .Executes(() =>
@@ -148,7 +151,7 @@ class Build : NukeBuild
             var testProjects = new[] { Solution.HttpStatusTests };
 
             AbsolutePath coverageResultFile = null;
-            AbsolutePath coverageReportFile = null;
+            AbsolutePath coverageReportFile;
 
             foreach (var testProject in testProjects)
             {
@@ -187,19 +190,11 @@ class Build : NukeBuild
 
             ReportSummary(s =>
             {
-                // var r = TestResultSummaries.GetTestResultSummaryCounters(TestResultsDirectory);
-                // if (r.HasResults)
-                // {
-                //     s.Add("Tests T/P/F", $"{r.TotalTests.Value}/{r.Passed.Value}/{r.Failed.Value}");
-                // }
-
-                if (coverageResultFile != null)
+                if (coverageResultFile == null) return s;
+                var c = TestResultSummaries.GetTestCoverageSummary(coverageResultFile, testProjects);
+                if (c.HasCoverage)
                 {
-                    var c = TestResultSummaries.GetTestCoverageSummary(coverageResultFile, testProjects);
-                    if (c.HasCoverage)
-                    {
-                        s.Add("Coverage", $"{c.CoveredStatements}/{c.TotalStatements}/{c.CoveragePercent}%");
-                    }
+                    s.Add("Coverage", $"{c.CoveredStatements}/{c.TotalStatements}/{c.CoveragePercent}%");
                 }
 
                 return s;
@@ -210,7 +205,7 @@ class Build : NukeBuild
         .DependsOn(Compile)
         .Executes(() =>
         {
-            DockerTasks.DockerBuild(s => new MyDockerBuildSettings()
+            DockerTasks.DockerBuild(_ => new MyDockerBuildSettings()
                 .SetTag(DockerFullImageName)
                 .SetFile(Solution.Directory / "Dockerfile")
                 .SetProgress("plain")
@@ -223,7 +218,7 @@ class Build : NukeBuild
         .Executes(() =>
         {
             DockerTasks.DockerRun(s => s
-                .SetPublish($"{hostPort}:{containerPort}")
+                .SetPublish($"{HostPort}:{ContainerPort}")
                 .EnableDetach()
                 .SetImage(DockerFullImageName));
         });
@@ -262,7 +257,7 @@ class Build : NukeBuild
             var containerId = GetContainerIds().First();
             DockerTasks.DockerStop(s => s.AddContainers(containerId));
 
-            if (!noCleanup)
+            if (!NoCleanup)
             {
                 DockerTasks.DockerContainerRm(s => s.AddContainers(containerId));
             }
@@ -270,16 +265,16 @@ class Build : NukeBuild
 
     Target DockerLogin => _ => _
         .Unlisted()
-        .OnlyWhenDynamic(() => IsRunningAsGitHubAction())
+        .OnlyWhenDynamic(IsRunningAsGitHubAction)
         .Executes(() =>
         {
-            DockerTasks.DockerLogin(s => new MyDockerLoginSettings()
-                .SetServer(dockerRepository)
+            DockerTasks.DockerLogin(_ => new MyDockerLoginSettings()
+                .SetServer(DockerRepository)
                 .SetUsername(GitHubActions?.Actor)
                 .SetPassword(GitHubActions?.Token));
         });
 
-    bool IsRunningAsGitHubAction() => GitHubActions is { Actor: { }, Token: { } };
+    bool IsRunningAsGitHubAction() => GitHubActions is { Actor: not null, Token: not null };
 
     Target DockerPush => _ => _
         .DependsOn(IntegrationTest, DockerLogin)

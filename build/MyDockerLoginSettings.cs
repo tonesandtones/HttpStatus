@@ -6,7 +6,7 @@ using Serilog;
 [Serializable]
 class MyDockerLoginSettings : DockerLoginSettings
 {
-    public override Action<OutputType, string> ProcessCustomLogger => CustomLogger;
+    public override Action<OutputType, string> ProcessLogger => CustomLogger;
 
     internal static void CustomLogger(OutputType type, string output)
     {

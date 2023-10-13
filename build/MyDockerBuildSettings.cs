@@ -8,7 +8,7 @@ public class MyDockerBuildSettings : DockerBuildSettings
 {
     //docker buildkit sends _all_ output to stderr, not just errors. So provide a different ProcessCustomLogger
     //that can split the stderr to Debug, Warning, or Error
-    public override Action<OutputType, string> ProcessCustomLogger => CustomLogger;
+    public override Action<OutputType, string> ProcessLogger => CustomLogger;
 
     internal static void CustomLogger(OutputType type, string output)
     {
